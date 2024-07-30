@@ -5,9 +5,18 @@ namespace TestDLLMod
 {
     public class AdrenalineMod : KHMod
     {
-
+        private int additionalPower = 0;
         public AdrenalineMod(ModInterface mi) : base(mi)
         {
+        }
+
+        private void updatePlayerPower(int power)
+        {
+            Entity player = Entity.getPlayer(modInterface.dataInterface);
+            int difference = power - additionalPower;
+            player.StatPage.Strength = truncate(player.StatPage.Strength + difference, 100);
+            player.StatPage.Defense = truncate(player.StatPage.Defense + difference, 100);
+            additionalPower = power;
         }
 
         private int truncate(int current, int maxVal)
@@ -17,11 +26,8 @@ namespace TestDLLMod
 
         public override void playerLoaded(Entity newPlayer)
         {
-            if(newPlayer.StatPage.MaxHP == 0)
-            {
-                newPlayer.StatPage.MaxHP = 1;
-                newPlayer.StatPage.CurrentHP = 1;
-            }
+            newPlayer.StatPage.MaxHP = truncate(newPlayer.StatPage.MaxHP, int.MaxValue);
+            newPlayer.StatPage.CurrentHP = truncate(newPlayer.StatPage.CurrentHP, int.MaxValue);
         }
 
         public override void onDamage(Entity target, int damage)
@@ -37,6 +43,10 @@ namespace TestDLLMod
                     newMaxHP = 0;
                 }
                 target.StatPage.MaxHP = newMaxHP;
+                if (target.IsPlayer)
+                {
+                    updatePlayerPower(0);
+                }
             }
 
             else if (target.IsEnemy)
@@ -45,8 +55,8 @@ namespace TestDLLMod
                 {
                     if (target.StatPageID != e.StatPageID)
                     {
-                        e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (damage / 2), 1500);
-                        e.StatPage.CurrentHP = truncate(e.StatPage.CurrentHP + (damage / 2), 1500);
+                        e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (damage / 5), 1500);
+                        e.StatPage.CurrentHP = truncate(e.StatPage.CurrentHP + (damage / 5), 1500);
                         e.StatPage.Strength = truncate(e.StatPage.Strength + 1, 128);
                         e.StatPage.Defense = truncate(e.StatPage.Defense + 1, 80);
                     }
@@ -74,6 +84,7 @@ namespace TestDLLMod
                 {
                     e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (deceased.StatPage.MaxHP / 150), 255);
                 }
+                updatePlayerPower(additionalPower + 1);
             }
         }
     }
