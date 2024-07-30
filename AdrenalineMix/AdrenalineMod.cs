@@ -52,6 +52,8 @@ namespace TestDLLMod
                     {
                         e.StatPage.MaxHP += (damage / 2);
                         e.StatPage.CurrentHP += (damage / 2);
+                        e.StatPage.Strength += (damage / 10);
+                        e.StatPage.Defense += (damage / 10);
                     }
                 }
             }
@@ -75,7 +77,7 @@ namespace TestDLLMod
                 Entity[] party = et.Party;
                 foreach (Entity e in party)
                 {
-                    e.StatPage.MaxHP = e.StatPage.MaxHP + (deceased.StatPage.MaxHP * 1 / 100);
+                    e.StatPage.MaxHP = e.StatPage.MaxHP + (deceased.StatPage.MaxHP * 5 / 100);
                 }
             }
         }
