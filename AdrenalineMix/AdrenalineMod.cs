@@ -82,7 +82,7 @@ namespace TestDLLMod
                 Entity[] party = et.Party;
                 foreach (Entity e in party)
                 {
-                    e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (deceased.StatPage.MaxHP / 150), 255);
+                    e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (deceased.StatPage.MaxHP / 150) + 1, 255);
                 }
                 updatePlayerPower(additionalPower + 1);
             }
