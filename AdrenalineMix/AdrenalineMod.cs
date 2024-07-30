@@ -5,55 +5,50 @@ namespace TestDLLMod
 {
     public class AdrenalineMod : KHMod
     {
-        private IntPtr cameraTargetPtr;
 
         public AdrenalineMod(ModInterface mi) : base(mi)
         {
-            cameraTargetPtr = modInterface.memoryInterface.nameToAddress("CameraTargetPtr");
         }
 
-
-        private void updateCamera(Entity target)
+        private int truncate(int current, int maxVal)
         {
-            modInterface.memoryInterface.writeLong(cameraTargetPtr, target.EntityPtr);
+            return Math.Clamp(current, 1, maxVal);
         }
 
-        public override void playerLockOn(Entity target)
+        public override void playerLoaded(Entity newPlayer)
         {
-            updateCamera(target);
-        }
-
-        public override void playerLockOff()
-        {
-            updateCamera(Entity.getPlayer(modInterface.dataInterface));
+            if(newPlayer.StatPage.MaxHP == 0)
+            {
+                newPlayer.StatPage.MaxHP = 1;
+                newPlayer.StatPage.CurrentHP = 1;
+            }
         }
 
         public override void onDamage(Entity target, int damage)
         {
             EntityTable et = EntityTable.Current(modInterface.dataInterface);
             Entity[] enemies = et.Enemies;
-
+            
             if (target.IsPartyMember)
             {
-                target.StatPage.MaxHP -= (damage / 2);
-
-                foreach (Entity e in enemies)
+                int newMaxHP = truncate(target.StatPage.MaxHP - (damage / 2), 255);
+                if (newMaxHP == 1)
                 {
-                    e.StatPage.MaxHP += (damage / 2);
-                    e.StatPage.CurrentHP += (damage / 2);
+                    newMaxHP = 0;
                 }
+                target.StatPage.MaxHP = newMaxHP;
             }
 
             else if (target.IsEnemy)
             {
                 foreach (Entity e in enemies)
                 {
-                    if (e.EntityPtr != target.EntityPtr)
+                    if (target.StatPageID != e.StatPageID)
                     {
-                        e.StatPage.MaxHP += (damage / 2);
-                        e.StatPage.CurrentHP += (damage / 2);
-                        e.StatPage.Strength += (damage / 10);
-                        e.StatPage.Defense += (damage / 10);
+                        e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (damage / 2), 1500);
+                        e.StatPage.CurrentHP = truncate(e.StatPage.CurrentHP + (damage / 2), 1500);
+                        e.StatPage.Strength = truncate(e.StatPage.Strength + 1, 128);
+                        e.StatPage.Defense = truncate(e.StatPage.Defense + 1, 80);
                     }
                 }
             }
@@ -66,8 +61,8 @@ namespace TestDLLMod
                 Entity player = Entity.getPlayer(modInterface.dataInterface);
                 if (player != null)
                 {
-                    player.StatPage.MaxHP = (player.StatPage.MaxHP * 9 / 10);
-                    player.StatPage.CurrentHP = (player.StatPage.CurrentHP * 9 / 10);
+                    player.StatPage.MaxHP = truncate((player.StatPage.MaxHP * 9 / 10), 255);
+                    player.StatPage.CurrentHP = truncate((player.StatPage.CurrentHP * 9 / 10), 255);
 
                 }
             }
@@ -77,7 +72,7 @@ namespace TestDLLMod
                 Entity[] party = et.Party;
                 foreach (Entity e in party)
                 {
-                    e.StatPage.MaxHP = e.StatPage.MaxHP + (deceased.StatPage.MaxHP * 5 / 100);
+                    e.StatPage.MaxHP = truncate(e.StatPage.MaxHP + (deceased.StatPage.MaxHP / 150), 255);
                 }
             }
         }
